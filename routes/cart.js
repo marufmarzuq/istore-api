@@ -1,10 +1,14 @@
 const Cart = require("../models/Cart");
-const { verifyTokenAndAuth, verifyTokenAndAdmin } = require("./verifyToken");
+const {
+  verifyTokenAndAuth,
+  verifyTokenAndAdmin,
+  verifyToken,
+} = require("./verifyToken");
 
 const router = require("express").Router();
 
 // Create cart
-router.post("/", verifyTokenAndAuth, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   const newCart = new Cart(req.body);
 
   try {
@@ -15,81 +19,47 @@ router.post("/", verifyTokenAndAuth, async (req, res) => {
   }
 });
 
-// Update product
-router.put("/:id", verifyTokenAndAdmin, async (req, res) => {
+// Update cart
+router.put("/:id", verifyTokenAndAuth, async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
+    const updatedCart = await Cart.findByIdAndUpdate(
       req.params.id,
       {
         $set: req.body,
       },
       { new: true }
     );
-    res.status(200).json(updatedProduct);
+    res.status(200).json(updatedCart);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Delete product
-router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
+// Delete cart
+router.delete("/:id", verifyTokenAndAuth, async (req, res) => {
   try {
-    await Product.findOneAndDelete(req.params.id);
-    res.status(200).json("Product has been deleted!");
+    await Cart.findOneAndDelete(req.params.id);
+    res.status(200).json("Cart has been deleted!");
   } catch (error) {
     res.status(500).json(error);
   }
 });
 
-// Get product
-router.get("/find/:id", async (req, res) => {
+// Get user cart
+router.get("/find/:userId", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    res.status(200).json(product);
+    const cart = await Cart.findOne({ userId: req.params.userId });
+    res.status(200).json(cart);
   } catch (error) {
     res.status(500).json(error);
   }
 });
 
-// Get all products
-router.get("/", async (req, res) => {
-  const qNew = req.query.new;
-  const qCategory = req.query.category;
+// Get all carts
+router.get("/", verifyTokenAndAdmin, async (req, res) => {
   try {
-    let products;
-    if (qNew) {
-      products = await Product.find().sort({ createdAt: -1 }).limit(5);
-    } else if (qCategory) {
-      products = await Product.find({ categories: { $in: [qCategory] } });
-    } else {
-      products = await Product.find();
-    }
-    res.status(200).json(products);
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
-
-// Get products stats
-router.get("/stats", verifyTokenAndAdmin, async (req, res) => {
-  const date = new Date();
-  const lastYear = new Date(date.setFullYear(date.getFullYear() - 1));
-  try {
-    const data = await Product.aggregate([
-      { $match: { createdAt: { $gte: lastYear } } },
-      {
-        $project: {
-          month: { $month: "$createdAt" },
-        },
-      },
-      {
-        $group: {
-          _id: "$month",
-          total: { $sum: 1 },
-        },
-      },
-    ]);
-    res.status(200).json(data);
+    const carts = await Cart.find();
+    res.status(200).json(carts);
   } catch (error) {
     res.status(500).json(error);
   }

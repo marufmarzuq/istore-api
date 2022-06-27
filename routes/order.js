@@ -1,4 +1,4 @@
-const Cart = require("../models/Cart");
+const Order = require("../models/Order");
 const {
   verifyTokenAndAuth,
   verifyTokenAndAdmin,
@@ -7,46 +7,46 @@ const {
 
 const router = require("express").Router();
 
-// Create cart
+// Create order
 router.post("/", verifyToken, async (req, res) => {
-  const newCart = new Cart(req.body);
+  const newOrder = new Order(req.body);
 
   try {
-    const savedCart = await newCart.save();
-    res.status(200).json(savedCart);
+    const savedOrder = await newOrder.save();
+    res.status(200).json(savedOrder);
   } catch (error) {
     res.status(500).json(error);
   }
 });
 
-// Update cart
-router.put("/:id", verifyTokenAndAuth, async (req, res) => {
+// Update order
+router.put("/:id", verifyTokenAndAdmin, async (req, res) => {
   try {
-    const updatedCart = await Cart.findByIdAndUpdate(
+    const updatedOrder = await Cart.findByIdAndUpdate(
       req.params.id,
       {
         $set: req.body,
       },
       { new: true }
     );
-    res.status(200).json(updatedCart);
+    res.status(200).json(updatedOrder);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// Delete cart
-router.delete("/:id", verifyTokenAndAuth, async (req, res) => {
+// Delete order
+router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
   try {
-    await Cart.findOneAndDelete(req.params.id);
-    res.status(200).json("Cart has been deleted!");
+    await Order.findOneAndDelete(req.params.id);
+    res.status(200).json("Order has been deleted!");
   } catch (error) {
     res.status(500).json(error);
   }
 });
 
-// Get user cart
-router.get("/find/:userId", async (req, res) => {
+// Get user orders
+router.get("/find/:userId", verifyTokenAndAuth, async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.params.userId });
     res.status(200).json(cart);
